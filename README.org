@@ -1,0 +1,58 @@
+#+TITLE: AWS ECS proxy
+
+This project was inspired by[[https://github.com/codesuki/ecs-gen][ ecs-gen]] but I added more support for fargate clusters,
+as well as updating the go version and AWS sdk.
+
+* Installation
+ecsproxy was made to run on a docker container, so to build the package just run
+#+begin_src shell
+docker build . -t ecsproxy
+#+end_src
+
+The image will be saved as ecsproxy:latest so you can upload it to ECR or other repositories.
+
+* Usage
+For the most part the usage should be the same as ecs-gen, as it uses most of the same variables.
+The tasks running on the ECS cluster should have these variables or else they will be ignored by the
+proxy:
+#+begin_src
+VIRTUAL_HOST=branch.example.com
+VIRTUAL_PORT=8080 (This variable is optional, but if set, it will take priority over the exposed port)
+#+end_src
+
+There are environment variables for the proxy container itself. The cluster and region variables are mandatory
+for the proxy to work.
+#+begin_src
+ECS_PROXY_CLUSTER
+ECS_PROXY_REGION
+#+end_src
+
+Some of the flags from ecs-gen are also supported (cluster and region can be set with flags too)
+
+#+begin_src
+Usage of ./ecsproxy:
+  -cluster string
+    	The cluster to scan.
+  -freq int
+    	Time in secconds between each scan. (default 30)
+  -once
+    	Add this flag to run the scan only once.
+  -output string
+    	The output file for nginx configuration. (default "/etc/nginx/conf.d/default.conf")
+  -region string
+    	The AWS region to use.
+  -signal string
+    	Command to use for updating the nginx configuration. (default "nginx -s reload")
+  -template string
+    	The template file to use for nginx configuration. (default "template.tmpl")
+#+end_src
+
+The docker image is configured so it can handle these flags as the CMD/command. For example, to run the image with flags:
+#+begin_src shell
+docker run ecsproxy -once -freq 15 -signal "nginx -s reload"
+#+end_src
+
+* TODOS
+- Set some nginx configurations using environment variables.
+- Use the metadata server to retrieve the cluster name and AWS region.
+- Tests
